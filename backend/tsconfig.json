@@ -1,0 +1,123 @@
+{
+  // Visit https://aka.ms/tsconfig to read more about this file
+  "compilerOptions": {
+    // ============================================================
+    // File Layout
+    // ============================================================
+
+    // All TypeScript source files are stored inside src/
+    "rootDir": "./src",
+
+    // Compiled JavaScript files will be generated inside dist/
+    "outDir": "./dist",
+
+    // ============================================================
+    // Environment Settings
+    // ============================================================
+
+    // See also https://aka.ms/tsconfig/module
+    //
+    // NodeNext allows TypeScript to follow Node.js ESM behavior.
+    "module": "NodeNext",
+
+    // Required when module is NodeNext.
+    "moduleResolution": "NodeNext",
+
+    // Compile JavaScript using modern Node.js-compatible syntax.
+    "target": "ES2022",
+
+    // Include standard modern JavaScript APIs.
+    "lib": ["ES2022"],
+
+    // For nodejs:
+    // Include Node.js types such as process, Buffer, __dirname, etc.
+    // npm install -D @types/node
+    "types": ["node"],
+
+    // ============================================================
+    // Module Compatibility
+    // ============================================================
+
+    // Makes importing CommonJS libraries such as Express easier.
+    "esModuleInterop": true,
+
+    // Allows JSON files to be imported if required later.
+    "resolveJsonModule": true,
+
+    // Preserve imports/exports according to the source module syntax.
+    "verbatimModuleSyntax": true,
+
+    // Treat every file as a module when appropriate.
+    "moduleDetection": "force",
+
+    // ============================================================
+    // Other Outputs
+    // ============================================================
+
+    // Generates .map files so errors can point back to TypeScript source.
+    "sourceMap": true,
+
+    // This is an application, not a reusable npm library,
+    // so declaration files are unnecessary.
+    "declaration": false,
+
+    "declarationMap": false,
+
+    // Do not generate JavaScript when TypeScript errors exist.
+    "noEmitOnError": true,
+
+    // ============================================================
+    // Stricter Typechecking Options
+    // ============================================================
+
+    // Enables TypeScript's strict type checking.
+    "strict": true,
+
+    // Makes array/index access safer because a value may be undefined.
+    "noUncheckedIndexedAccess": true,
+
+    // Distinguishes between a missing optional property
+    // and explicitly assigning undefined.
+    "exactOptionalPropertyTypes": true,
+
+    // ============================================================
+    // Style Options
+    // ============================================================
+
+    // You can enable these later when you want stricter code-quality rules.
+
+    // "noImplicitReturns": true,
+    // "noImplicitOverride": true,
+    // "noUnusedLocals": true,
+    // "noUnusedParameters": true,
+    // "noFallthroughCasesInSwitch": true,
+    // "noPropertyAccessFromIndexSignature": true,
+
+    // ============================================================
+    // Recommended Options
+    // ============================================================
+
+    // Each TypeScript file can safely be transpiled independently.
+    "isolatedModules": true,
+
+    // Detect suspicious side-effect-only imports.
+    "noUncheckedSideEffectImports": true,
+
+    // Avoid type-checking declaration files inside node_modules.
+    "skipLibCheck": true,
+
+    // Ensures imports use consistent filename casing.
+    // Important because Windows is case-insensitive while Linux/Docker is not.
+    "forceConsistentCasingInFileNames": true
+  },
+
+  // Only compile application source code.
+  "include": ["src/**/*.ts"],
+
+  // Never compile dependencies or generated output.
+  "exclude": [
+    "node_modules",
+    "dist",
+    "tests"
+  ]
+}
