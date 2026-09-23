@@ -23,3 +23,9 @@ During validation, ESLint caught an API error wrapper that discarded the origina
 ## Create order portal
 
 At the user's request, Codex added a native dialog form, editable/generated order IDs, a `POST /orders` endpoint, server-side creation timestamps, idempotent retries, duplicate-order protection, and service/HTTP tests. This extends the original assignment's webhook-only creation flow. The existing status rules still apply. No customer or product fields were invented because they are not part of the order model.
+
+## Event operations and API checklist
+
+Codex used the user's pasted 24-request checklist to add status-action controls, an editable event form with exact payload retries and raw JSON support, and a sequential in-app API check runner with response assertions. Existing backend rules were reused. Integration tests run actual frontend request/check code against an isolated backend, including repeated runs and stopping before subsequent requests.
+
+Validation caught a missing closing brace in the initial API-function edit. The initial transpilation-based integration harness tolerated that syntax error, while lint and the build correctly rejected it. Codex fixed the brace and made the harness fail on transpiler error diagnostics. Review also identified that using the current time for a missing predecessor could place it after an older pending successor; timestamp preparation was corrected and covered by an integration test.

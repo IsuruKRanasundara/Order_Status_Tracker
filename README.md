@@ -56,7 +56,17 @@ The frontend displays a responsive dashboard with order totals, search by order 
 
 The frontend connects to `http://localhost:3000` by default. To use another API address, copy `frontend/.env.example` to `frontend/.env.local`, edit `VITE_API_URL`, and restart Vite. Keep the backend's `FRONTEND_ORIGIN` aligned with the frontend URL (default `http://localhost:5173`). Google Fonts are optional; system fonts are used when unavailable.
 
-Start the backend and frontend in separate terminals. Run the supplied Postman collection to create orders, then select **Refresh orders** in the dashboard. Select an order ID or arrow to inspect its event history. Search and status filtering operate on the fetched list; the summary cards always describe all fetched orders. **Awaiting events** filters orders whose status is null, while **Pending events** counts pending events across every order.
+Start the backend and frontend in separate terminals. Use **Create order** to add an order. Select an order ID or arrow to inspect its event history. Search and status filtering operate on the fetched list; the summary cards always describe all fetched orders. **Awaiting events** filters orders whose status is null, while **Pending events** counts pending events across every order.
+
+## Order actions and event checks
+
+- Select an order to use **Mark as paid**, **Ship order**, **Mark delivered**, or **Cancel order**. Actions open an event form for review and submission through `POST /webhooks/orders`. Only valid next actions are offered; terminal orders display an explanation. Custom events remain available for testing rejected transitions.
+- Use **Resend event** beside a history entry to submit its original ID, status, and timestamp. Repeating the same event does not add another history entry. A rejected event remains rejected on retry.
+- Use **Event tools → Send event** to edit order ID, status, event ID, and timestamp. This supports earlier/missing events and ID-conflict checks. **Edit raw JSON** sends the exact entered text, enabling unknown statuses, missing fields, invalid timestamps, and malformed JSON tests. Changing event content while retaining the same ID is expected to produce a conflict.
+- Responses show HTTP status, duplicate/pending/applied outcomes, validation errors, and expandable JSON. **Resend last payload** sends the last request unchanged, including after a timeout. Every HTTP response refreshes the dashboard and history, including rejections that enter history.
+- **Event tools → API checks → Run all 24 checks** runs the scenarios in the pasted checklist in order. Each run uses new IDs and creates three test orders. Results include individual assertions and response bodies. Expected 400/404/409 responses count as passes. **Stop** prevents subsequent requests but does not undo completed requests; running again starts a fresh sequence. Test orders disappear when the in-memory backend restarts.
+
+Run `npm run test:api` from `frontend` to exercise the frontend API functions and check runner against an isolated local backend. Install dependencies in both folders first. The command builds the backend, then runs integration tests without using or modifying a separately running server. The suite verifies repeatable 24-step runs, semantic assertion failures, event retries, raw validation failures, cancellation of a run, and pending-event reconciliation through order actions.
 
 The backend implements webhook ingestion, status validation, duplicate detection, out-of-order event reconciliation, filtered order listing, and full event history. Storage is in memory: restarting the server clears all orders and event IDs. The existing Prisma schema is a draft and is not used by the running application.
 

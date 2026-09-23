@@ -16,3 +16,5 @@ export interface OrderEvent {
   reason: string | null
 }
 export interface OrderDetails extends OrderSummary { events: OrderEvent[] }
+export type OrderEventInput = Pick<OrderEvent, 'eventId' | 'orderId' | 'status' | 'timestamp'>
+export interface WebhookResult { duplicate: boolean; event: OrderEvent; order: OrderSummary }

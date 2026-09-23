@@ -1,10 +1,11 @@
 import { useEffect, useState } from 'react'
 import { getOrder } from '../api/orders.api'
-import type { OrderDetails as OrderDetailsData } from '../types/order'
+import { prepareOrderEvent } from '../api/order-events'
+import type { OrderDetails as OrderDetailsData, OrderEventInput, OrderStatus } from '../types/order'
 import Icon from './Icon'
 import StatusBadge from './StatusBadge'
 
-export default function OrderDetails({ orderId, onClose }: { orderId: string | null; onClose: () => void }) {
+export default function OrderDetails({ orderId, onClose, onEvent }: { orderId: string | null; onClose: () => void; onEvent: (event: OrderEventInput) => void }) {
   const [order, setOrder] = useState<OrderDetailsData | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(Boolean(orderId))
@@ -20,6 +21,11 @@ export default function OrderDetails({ orderId, onClose }: { orderId: string | n
     return () => controller.abort()
   }, [orderId, retry])
 
+  function prepareEvent(status: OrderStatus) {
+    if (!order) return
+    onEvent(prepareOrderEvent(order, status))
+  }
+
   return <aside className="details-panel" aria-labelledby="details-title">
     <div className="panel-heading"><h2 id="details-title">Order details</h2>{orderId && <button className="icon-button" aria-label="Close order details" onClick={onClose}><Icon name="close" /></button>}</div>
     {!orderId ? <div className="state-box details-empty"><div className="empty-orbit"><Icon name="box" /></div><h3>A closer look at every order</h3><p>Select an order to see its journey, from creation to delivery.</p><span className="subtle-label">EVERY UPDATE, IN ONE PLACE</span></div>
@@ -27,6 +33,14 @@ export default function OrderDetails({ orderId, onClose }: { orderId: string | n
       : error ? <div className="state-box error-state" role="alert"><h3>Could not load details</h3><p>{error}</p><button className="button" onClick={() => { setLoading(true); setError(null); setRetry(value => value + 1) }}>Try again</button></div>
       : order && <div className="details-body">
         <div className="detail-label">ORDER ID</div><h3 className="detail-order-id">{order.id}</h3><StatusBadge status={order.status} />
+        <div className="order-status-actions">
+          {order.status === 'created' && <button className="button primary-button" onClick={() => prepareEvent('paid')}>Mark as paid</button>}
+          {order.status === 'paid' && <button className="button primary-button" onClick={() => prepareEvent('shipped')}>Ship order</button>}
+          {order.status === 'shipped' && <button className="button primary-button" onClick={() => prepareEvent('delivered')}>Mark delivered</button>}
+          {(order.status === 'created' || order.status === 'paid') && <button className="button" onClick={() => prepareEvent('cancelled')}>Cancel order</button>}
+          {(order.status === 'delivered' || order.status === 'cancelled') && <p className="field-help">This order is {order.status}; no further status changes are allowed.</p>}
+          <button className="text-button" onClick={() => prepareEvent(order.status ?? 'created')}>Custom event</button>
+        </div>
         <dl className="detail-facts"><div><dt>Last update</dt><dd>{order.updatedAt ? new Date(order.updatedAt).toLocaleString() : 'Awaiting earlier events'}</dd></div><div><dt>Total events</dt><dd>{order.events.length}</dd></div></dl>
         {order.pendingEventCount > 0 && <p className="pending-banner"><Icon name="clock" />{order.pendingEventCount} {order.pendingEventCount === 1 ? 'event is' : 'events are'} waiting for an earlier update.</p>}
         <div className="timeline-heading"><h3>Event history</h3><span>{order.events.length} events</span></div>
@@ -35,6 +49,7 @@ export default function OrderDetails({ orderId, onClose }: { orderId: string | n
           <div className="event-heading"><strong>{event.status}</strong><span className={`outcome outcome-${event.outcome}`}>{event.outcome}</span></div>
           <time dateTime={event.timestamp}>{new Date(event.timestamp).toLocaleString()}</time>
           <p className="event-id">{event.eventId}</p>
+          <button className="text-button resend-event" onClick={() => onEvent({ eventId: event.eventId, orderId: event.orderId, status: event.status, timestamp: event.timestamp })}>Resend event</button>
           {event.reason && <p className="event-reason">{event.reason}</p>}
         </li>)}</ol>
       </div>}

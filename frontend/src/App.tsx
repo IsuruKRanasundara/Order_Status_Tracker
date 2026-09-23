@@ -5,7 +5,9 @@ import OrderDetails from './components/OrderDetails'
 import StatusFilter from './components/StatusFilter'
 import Icon from './components/Icon'
 import CreateOrder from './components/CreateOrder'
-import type { OrderSummary, StatusFilterValue } from './types/order'
+import EventComposer from './components/EventComposer'
+import ApiChecks from './components/ApiChecks'
+import type { OrderEventInput, OrderSummary, StatusFilterValue } from './types/order'
 import './App.css'
 
 function App() {
@@ -19,6 +21,8 @@ function App() {
   const [lastSync, setLastSync] = useState<Date | null>(null)
   const [creating, setCreating] = useState(false)
   const [createdMessage, setCreatedMessage] = useState('')
+  const [eventDraft, setEventDraft] = useState<{ initial: OrderEventInput | null } | null>(null)
+  const [checksOpen, setChecksOpen] = useState(false)
 
   useEffect(() => {
     const controller = new AbortController()
@@ -73,12 +77,15 @@ function App() {
             <OrderList orders={visibleOrders} selectedId={activeId} onSelect={setSelectedId} loading={loading} error={error} onRetry={refresh} filtered={filter !== 'all' || search.trim() !== ''} />
             {!loading && !error && <div className="list-footer"><span>Showing {visibleOrders.length} of {orders.length} orders</span>{(filter !== 'all' || search !== '') && <button className="text-button" onClick={() => { setSearch(''); setFilter('all'); setSelectedId(null) }}>Clear filters</button>}</div>}
           </section>
-          <OrderDetails key={`${activeId ?? 'empty'}-${refreshCount}`} orderId={activeId} onClose={() => setSelectedId(null)} />
+          <OrderDetails key={`${activeId ?? 'empty'}-${refreshCount}`} orderId={activeId} onClose={() => setSelectedId(null)} onEvent={initial => setEventDraft({ initial })} />
         </div>
+        <div className="event-tools"><div><h2>Event tools</h2><p>Send updates or verify the complete order lifecycle.</p></div><div className="heading-actions"><button className="button" onClick={() => setEventDraft({ initial: null })}>Send event</button><button className="button" onClick={() => setChecksOpen(true)}>API checks</button></div></div>
+        <ApiChecks open={checksOpen} onComplete={refresh} onClose={() => setChecksOpen(false)} />
         <footer className="page-footer"><span><span className="footer-dot" />Order Status Tracker</span><span aria-live="polite">{loading ? 'Fetching latest updates...' : error ? 'Refresh to reconnect' : lastSync ? `Last refreshed at ${lastSync.toLocaleTimeString()}` : 'Ready to connect'}</span></footer>
       </main>
     </div>
     {creating && <CreateOrder onClose={() => setCreating(false)} onCreated={orderCreated} />}
+    {eventDraft && <EventComposer initialEvent={eventDraft.initial} onClose={() => setEventDraft(null)} onSubmitted={refresh} />}
   </div>
 }
 export default App
