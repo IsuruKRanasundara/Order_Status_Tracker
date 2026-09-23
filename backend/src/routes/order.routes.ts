@@ -6,6 +6,7 @@ export function createOrderRouter(service: OrderService) {
   const router = Router();
   const controller = createOrderController(service);
   router.post('/webhooks/orders', controller.receiveEvent);
+  router.post('/orders', controller.createOrder);
   router.get('/orders', controller.listOrders);
   router.get('/orders/:id', controller.getOrder);
   return router;

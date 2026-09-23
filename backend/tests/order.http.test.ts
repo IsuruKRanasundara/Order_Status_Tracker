@@ -23,6 +23,9 @@ async function start(t: TestContext) {
   }));
   const base = `http://127.0.0.1:${(server.address() as AddressInfo).port}`;
   return {
+    create: (body: unknown) => fetch(`${base}/orders`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body),
+    }),
     get: (path: string) => fetch(`${base}${path}`),
     post: (body: unknown) => fetch(`${base}/webhooks/orders`, {
       method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body),
@@ -32,6 +35,26 @@ async function start(t: TestContext) {
     }),
   };
 }
+
+test('HTTP: create order returns 201, retries return 200, conflicts return 409', async (t) => {
+  const api = await start(t);
+  const body = { orderId: 'portal_order', requestId: 'portal_request' };
+  const created = await api.create(body);
+  assert.equal(created.status, 201);
+  const result = await json<{ duplicate: boolean; order: OrderSummary }>(created);
+  assert.equal(result.order.status, 'created');
+  assert.equal(result.duplicate, false);
+  const repeated = await api.create(body);
+  assert.equal(repeated.status, 200);
+  assert.equal((await json<{ duplicate: boolean }>(repeated)).duplicate, true);
+  const conflict = await api.create({ ...body, requestId: 'different' });
+  assert.equal(conflict.status, 409);
+  assert.equal((await json<ErrorResponse>(conflict)).error.code, 'ORDER_ALREADY_EXISTS');
+  assert.equal((await api.create({})).status, 400);
+  const details = await json<Order>(await api.get('/orders/portal_order'));
+  assert.equal(details.events.length, 1);
+  assert.equal(details.events[0]?.status, 'created');
+});
 
 test('HTTP: pending -> applied, duplicates, list filtering and full history', async (t) => {
   const api = await start(t);

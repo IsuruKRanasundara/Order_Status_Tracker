@@ -26,6 +26,42 @@ function permutations<T>(items: T[]): T[][] {
     .map((rest) => [item, ...rest]));
 }
 
+test('manual order creation uses server time and safely retries without duplicate history', () => {
+  const { service } = setup();
+  const before = Date.now();
+  const input = { orderId: ' manual_1 ', requestId: 'request_1' };
+  const result = service.createOrder(input);
+  assert.equal(result.duplicate, false);
+  assert.equal(result.order.id, 'manual_1');
+  assert.equal(result.order.status, 'created');
+  assert.ok(Date.parse(result.order.updatedAt!) >= before);
+  assert.ok(Date.parse(result.order.updatedAt!) <= Date.now());
+  const retry = service.createOrder(input);
+  assert.equal(retry.duplicate, true);
+  assert.equal(retry.order.updatedAt, result.order.updatedAt);
+  assert.equal(service.getOrder('manual_1').events.length, 1);
+  const paid = { eventId: 'manual_paid', orderId: 'manual_1', status: 'paid', timestamp: new Date(Date.now() + 1000).toISOString() };
+  service.receiveEvent(paid);
+  assert.equal(service.createOrder(input).order.status, 'paid');
+  assert.equal(service.getOrder('manual_1').events.length, 2);
+});
+
+test('manual creation validates IDs and rejects existing orders without changing history', () => {
+  const { service } = setup();
+  for (const input of [null, {}, { orderId: ' ', requestId: 'r' }, { orderId: 'a', requestId: '' },
+    { orderId: 'a'.repeat(201), requestId: 'r' }]) {
+    expectError(() => service.createOrder(input), 'INVALID_ORDER', 400);
+  }
+  assert.equal(service.listOrders().length, 0);
+  service.createOrder({ orderId: 'a', requestId: 'r' });
+  expectError(() => service.createOrder({ orderId: 'a', requestId: 'new' }), 'ORDER_ALREADY_EXISTS');
+  expectError(() => service.createOrder({ orderId: 'b', requestId: 'r' }), 'REQUEST_ID_CONFLICT');
+  assert.equal(service.getOrder('a').events.length, 1);
+  service.receiveEvent(event('shipped', 2, 'pending'));
+  expectError(() => service.createOrder({ orderId: 'pending', requestId: 'pending_create' }), 'ORDER_ALREADY_EXISTS');
+  assert.equal(service.getOrder('pending').status, null);
+});
+
 test('transition validator allows only the five defined edges', () => {
   const statuses: OrderStatus[] = ['created', 'paid', 'shipped', 'delivered', 'cancelled'];
   const edges = new Set(['created:paid', 'paid:shipped', 'shipped:delivered', 'created:cancelled', 'paid:cancelled']);

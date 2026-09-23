@@ -19,3 +19,7 @@ Before submission, the candidate should record which parts they personally wrote
 Codex implemented the responsive dashboard styling, order summary cards, search/filter controls, typed API functions, selected-order timeline, loading/empty/error states, and retry/refresh controls. The UI uses real backend data without seeded display records. Requests use abort cleanup to prevent outdated results from replacing a newer selection. React's official effect documentation was consulted for request lifecycle handling.
 
 During validation, ESLint caught an API error wrapper that discarded the original network error. Codex attached the original error as `cause` before rerunning checks. The initial large shell write also exceeded the Windows command-length limit; it made no changes, and the writes were split into smaller commands.
+
+## Create order portal
+
+At the user's request, Codex added a native dialog form, editable/generated order IDs, a `POST /orders` endpoint, server-side creation timestamps, idempotent retries, duplicate-order protection, and service/HTTP tests. This extends the original assignment's webhook-only creation flow. The existing status rules still apply. No customer or product fields were invented because they are not part of the order model.

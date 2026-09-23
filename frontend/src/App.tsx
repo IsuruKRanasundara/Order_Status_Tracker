@@ -4,6 +4,7 @@ import OrderList from './components/OrderList'
 import OrderDetails from './components/OrderDetails'
 import StatusFilter from './components/StatusFilter'
 import Icon from './components/Icon'
+import CreateOrder from './components/CreateOrder'
 import type { OrderSummary, StatusFilterValue } from './types/order'
 import './App.css'
 
@@ -16,6 +17,8 @@ function App() {
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [refreshCount, setRefreshCount] = useState(0)
   const [lastSync, setLastSync] = useState<Date | null>(null)
+  const [creating, setCreating] = useState(false)
+  const [createdMessage, setCreatedMessage] = useState('')
 
   useEffect(() => {
     const controller = new AbortController()
@@ -28,6 +31,15 @@ function App() {
   }, [refreshCount])
 
   function refresh() { setLoading(true); setError(null); setRefreshCount(count => count + 1) }
+  function orderCreated(order: OrderSummary) {
+    setOrders(current => [...current.filter(item => item.id !== order.id), order])
+    setCreating(false)
+    setFilter('all')
+    setSearch('')
+    setSelectedId(order.id)
+    setCreatedMessage(`Order ${order.id} is ready to track.`)
+    refresh()
+  }
   const visibleOrders = orders
     .filter(order => (filter === 'all' || (filter === 'pending' ? order.status === null : order.status === filter)) && order.id.toLowerCase().includes(search.trim().toLowerCase()))
     .sort((a, b) => (b.updatedAt ? Date.parse(b.updatedAt) : 0) - (a.updatedAt ? Date.parse(a.updatedAt) : 0) || a.id.localeCompare(b.id))
@@ -51,7 +63,8 @@ function App() {
     <div className="workspace">
       <header className="topbar"><div className="breadcrumb">Workspace <span>/</span> <strong>Orders</strong></div><span className={`connection ${loading ? 'checking' : error ? 'offline' : ''}`}><span />{loading ? 'Connecting' : error ? 'Service unavailable' : 'Service connected'}</span></header>
       <main id="main-content">
-        <div className="page-heading"><div><div className="eyebrow">YOUR OPERATIONS, AT A GLANCE</div><h1>Order overview<span>.</span></h1><p>Keep every order in sight, every step of the way.</p></div><button className="button refresh-button" onClick={refresh} disabled={loading}><Icon name="refresh" className={loading ? 'spin' : ''} />{loading ? 'Refreshing...' : 'Refresh orders'}</button></div>
+        <div className="page-heading"><div><div className="eyebrow">YOUR OPERATIONS, AT A GLANCE</div><h1>Order overview<span>.</span></h1><p>Keep every order in sight, every step of the way.</p></div><div className="heading-actions"><button className="button refresh-button" onClick={refresh} disabled={loading}><Icon name="refresh" className={loading ? 'spin' : ''} />{loading ? 'Refreshing...' : 'Refresh orders'}</button><button className="button primary-button" onClick={() => { setCreatedMessage(''); setCreating(true) }}><Icon name="box" />Create order</button></div></div>
+        {createdMessage && <div className="success-banner" role="status"><Icon name="check" /><span>{createdMessage}</span><button className="icon-button" aria-label="Dismiss confirmation" onClick={() => setCreatedMessage('')}><Icon name="close" /></button></div>}
         <div className="stats-grid">{stats.map(stat => <section className="stat-card" key={stat.label} aria-label={stat.label}><div className="stat-top"><span>{stat.label}</span><span className={`stat-icon ${stat.color}`}><Icon name={stat.icon} /></span></div><strong className="stat-value">{loading || error ? '—' : stat.value}</strong><p>{stat.note}</p></section>)}</div>
         <div className="order-layout">
           <section className="orders-panel" aria-labelledby="orders-title">
@@ -65,6 +78,7 @@ function App() {
         <footer className="page-footer"><span><span className="footer-dot" />Order Status Tracker</span><span aria-live="polite">{loading ? 'Fetching latest updates...' : error ? 'Refresh to reconnect' : lastSync ? `Last refreshed at ${lastSync.toLocaleTimeString()}` : 'Ready to connect'}</span></footer>
       </main>
     </div>
+    {creating && <CreateOrder onClose={() => setCreating(false)} onCreated={orderCreated} />}
   </div>
 }
 export default App

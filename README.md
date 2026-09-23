@@ -52,7 +52,7 @@ Open the URL printed by Vite. Run `npm run lint` and `npm run build` in `fronten
 
 ## Current state
 
-The frontend displays a responsive dashboard with order totals, search by order ID, status filtering, and a selectable event timeline. Loading, empty, and error states include retry actions. Pending and rejected events are visible in history. Refresh reloads the list and selected order; data is not automatically polled.
+The frontend displays a responsive dashboard with order totals, search by order ID, status filtering, and a selectable event timeline. **Create order** opens a form with a generated or editable unique order ID. Successful creation refreshes the list, clears filters, and selects the new order. Orders begin as `created`, with server-generated timestamps. Loading, empty, and error states include retry actions. Pending and rejected events are visible in history. Refresh reloads the list and selected order; data is not automatically polled.
 
 The frontend connects to `http://localhost:3000` by default. To use another API address, copy `frontend/.env.example` to `frontend/.env.local`, edit `VITE_API_URL`, and restart Vite. Keep the backend's `FRONTEND_ORIGIN` aligned with the frontend URL (default `http://localhost:5173`). Google Fonts are optional; system fonts are used when unavailable.
 
@@ -86,6 +86,7 @@ npm start
 | Method | Path | Response |
 | --- | --- | --- |
 | POST | `/webhooks/orders` | `{ duplicate, event, order }`; 200 when applied, 202 while pending |
+| POST | `/orders` | `{ duplicate, order }`; 201 on creation, 200 for an identical retry |
 | GET | `/orders` | Array of order summaries |
 | GET | `/orders?status=paid` | Summaries filtered by current applied status |
 | GET | `/orders/:id` | Order summary plus an `events` array |
@@ -100,6 +101,8 @@ Webhook body:
   "timestamp": "2026-09-20T10:15:00Z"
 }
 ```
+
+Manual order creation accepts `{ "orderId": "ord_manual_1", "requestId": "unique-request-id" }`. The request ID is an idempotency key (1–160 characters) generated and retained by the form across retries. Reuse it with the same order ID to retry safely. A different request targeting an existing order returns `409 ORDER_ALREADY_EXISTS`; reusing a request ID for another order returns `409 REQUEST_ID_CONFLICT`. Existing orders with pending webhook events also count as existing orders. Manual creation records a `created` event in normal history with an ID prefixed by `manual_`.
 
 Send `Content-Type: application/json`. IDs must be nonempty strings (up to 200 characters; surrounding whitespace is trimmed). Timestamps require an explicit timezone and at most millisecond precision; timestamps are normalized to UTC. Invalid bodies or filters return 400, missing orders return 404, conflicting IDs or invalid transitions return 409, and bodies exceeding 16 KB return 413. Errors have shape `{ "error": { "code": "...", "message": "..." } }`.
 

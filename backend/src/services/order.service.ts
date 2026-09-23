@@ -63,6 +63,30 @@ export class OrderService {
     private readonly logger: Pick<Console, 'warn'> = console,
   ) {}
 
+  createOrder(input: unknown): { duplicate: boolean; order: OrderSummary } {
+    const parsed = z.object({
+      orderId: z.string().trim().min(1).max(200),
+      requestId: z.string().trim().min(1).max(160),
+    }).safeParse(input);
+    if (!parsed.success) {
+      throw new AppError(400, 'INVALID_ORDER', 'Provide an orderId (1–200 characters) and requestId (1–160 characters).');
+    }
+    const { orderId, requestId } = parsed.data;
+    const eventId = `manual_${requestId}`;
+    const existing = this.repository.findEvent(eventId);
+    if (existing) {
+      if (existing.orderId !== orderId || existing.status !== 'created' || existing.outcome !== 'applied') {
+        throw new AppError(409, 'REQUEST_ID_CONFLICT', 'This request ID was already used. Start a new order request.');
+      }
+      return { duplicate: true, order: this.summary(this.getOrder(orderId)) };
+    }
+    if (this.repository.findById(orderId)) {
+      throw new AppError(409, 'ORDER_ALREADY_EXISTS', 'This order ID already exists. Choose a different ID.');
+    }
+    const result = this.receiveEvent({ eventId, orderId, status: 'created', timestamp: new Date().toISOString() });
+    return { duplicate: false, order: result.order };
+  }
+
   receiveEvent(input: unknown): { duplicate: boolean; event: EventRecord; order: OrderSummary } {
     const parsed = eventSchema.safeParse(input);
     if (!parsed.success) {

@@ -4,6 +4,10 @@ import { OrderService, orderStatusSchema } from '../services/order.service.js';
 
 export function createOrderController(service: OrderService) {
   return {
+    createOrder(req: Request, res: Response) {
+      const result = service.createOrder(req.body);
+      res.status(result.duplicate ? 200 : 201).json(result);
+    },
     receiveEvent(req: Request, res: Response) {
       const result = service.receiveEvent(req.body);
       res.status(result.event.outcome === 'pending' ? 202 : 200).json(result);
