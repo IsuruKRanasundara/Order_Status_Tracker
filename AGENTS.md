@@ -1,6 +1,6 @@
 # Repository guidance
 
-- The backend is implemented with in-memory storage. The frontend remains a scaffold; Prisma is a draft. Do not describe placeholder functionality as implemented.
+- The backend uses in-memory storage and the React dashboard connects to it. Prisma remains a draft. Do not describe unimplemented persistence or automatic updates as implemented.
 - Keep frontend UI in `frontend/src/components`, requests in `frontend/src/api`, and types in `frontend/src/types`.
 - Keep backend HTTP handling in controllers/routes, business logic in services, persistence in repositories, and transition rules in domain modules.
 - Define the backend contract before assuming frontend endpoints or status values.

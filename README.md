@@ -1,6 +1,6 @@
 # Order Status Tracker
 
-A React + TypeScript frontend scaffold and a working Express + TypeScript backend.
+A React + TypeScript order dashboard and an Express + TypeScript backend.
 
 ## Structure
 
@@ -52,7 +52,11 @@ Open the URL printed by Vite. Run `npm run lint` and `npm run build` in `fronten
 
 ## Current state
 
-The frontend displays starter order list, details, and disabled status filter components. API and order type modules are placeholders until the backend contract is defined.
+The frontend displays a responsive dashboard with order totals, search by order ID, status filtering, and a selectable event timeline. Loading, empty, and error states include retry actions. Pending and rejected events are visible in history. Refresh reloads the list and selected order; data is not automatically polled.
+
+The frontend connects to `http://localhost:3000` by default. To use another API address, copy `frontend/.env.example` to `frontend/.env.local`, edit `VITE_API_URL`, and restart Vite. Keep the backend's `FRONTEND_ORIGIN` aligned with the frontend URL (default `http://localhost:5173`). Google Fonts are optional; system fonts are used when unavailable.
+
+Start the backend and frontend in separate terminals. Run the supplied Postman collection to create orders, then select **Refresh orders** in the dashboard. Select an order ID or arrow to inspect its event history. Search and status filtering operate on the fetched list; the summary cards always describe all fetched orders. **Awaiting events** filters orders whose status is null, while **Pending events** counts pending events across every order.
 
 The backend implements webhook ingestion, status validation, duplicate detection, out-of-order event reconciliation, filtered order listing, and full event history. Storage is in memory: restarting the server clears all orders and event IDs. The existing Prisma schema is a draft and is not used by the running application.
 
@@ -125,6 +129,6 @@ Invoke-RestMethod http://localhost:3000/orders/ord_9
 
 ## Next steps
 
-Connect the frontend API and type modules to the documented contract, including pending orders with null status, loading states, and errors. Keep network requests in `api`, reusable UI in `components`, and model types in `types`.
+For larger datasets, move frontend search/filtering to paginated server queries and add automatic updates. Keep network requests in `api`, reusable UI in `components`, and model types in `types`.
 
 Persistent storage, webhook authentication, pagination, and pending-event expiry/reconciliation jobs are not implemented. In-memory storage keeps the assignment small and is explicitly allowed in the brief. Pending events remain pending indefinitely if their predecessors never arrive. With more time, add persistence with transactions and a retention/reconciliation policy before deploying multiple server instances. Record your actual total time spent before submission.

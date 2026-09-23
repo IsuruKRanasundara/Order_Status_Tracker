@@ -1,3 +1,15 @@
-:root { font-family: system-ui, sans-serif; color: #42526e; background: #f4f6fa; font-synthesis: none; text-rendering: optimizeLegibility; }
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@500;600;700;800&display=swap');
+:root { font-family: 'DM Sans', system-ui, sans-serif; color: #253044; background: #f6f7f9; font-synthesis: none; text-rendering: optimizeLegibility; -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; }
 * { box-sizing: border-box; }
-body { margin: 0; min-width: 320px; }
+body { margin: 0; min-width: 360px; }
+button, input, select { font: inherit; }
+button, a, input, select { -webkit-tap-highlight-color: transparent; }
+button { cursor: pointer; color: inherit; }
+button:disabled { cursor: wait; opacity: .65; }
+a { color: inherit; }
+button, a, select, input { outline-offset: 4px; }
+:focus-visible { outline: 3px solid #997215; }
+h1, h2, h3, p { margin: 0; }
+button, input, select { transition: background .15s, border-color .15s; }
+.sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
+.icon { flex-shrink: 0; vertical-align: middle; }
